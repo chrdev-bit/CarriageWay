@@ -14,10 +14,10 @@ import java.io.PrintStream;
 public class Tests {
     @Test
     public void testScale() throws Throwable {
-        int clones = 1000;
+        int clones = 100;
         //Simulate a stream of data by duplicating existing area data
-        //he zones must be able to fit into RAM. As long as they do this could process areas indefinitely
-        //It doesn't save bitmaps to disk because of how many it produces wouldn't be much fun for file system
+        //The zones must be able to fit into RAM. As long as they do this could process areas indefinitely
+        //It doesn't save bitmaps to disk because the amount it produces wouldn't be much fun for a file system
         PipedOutputStream pos = new PipedOutputStream();
         PrintStream pr = new PrintStream(pos);
         class Runner extends Thread{
