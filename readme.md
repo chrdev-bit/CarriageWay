@@ -8,4 +8,5 @@ a tile server.
 
 It's been compiled to target Java 17.
 
-To run it in the terminal - java -cp target/CarriageWay-1.0-SNAPSHOT-jar-with-dependencies.jar com.cb.Main
+To run it in the terminal, run maven package then:
+<blockquote>java -cp target/CarriageWay-1.0-SNAPSHOT-jar-with-dependencies.jar com.cb.Main</blockquote>
