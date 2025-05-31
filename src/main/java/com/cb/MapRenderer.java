@@ -14,37 +14,21 @@ public class MapRenderer {
     private static final int TILE_SIZE = 256;
 
     /**
-     * Converts longitude and latitude to tile numbers.
-     *
-     * @param lon  Longitude (-180 to 180).
-     * @param lat  Latitude (-90 to 90).
-     * @param zoom Zoom level (0 to 19, or higher for detailed tiles).
-     * @return An array containing the tile numbers [x, y].
-     */
-    public int[] toTileNumbers(double lon, double lat, int zoom) {
-        // Calculate x and y tile numbers
-        int xTile = (int) Math.floor((lon + 180) / 360 * (1 << zoom));
-        int yTile = (int) Math.floor((1 - Math.log(Math.tan(Math.toRadians(lat)) + 1 / Math.cos(Math.toRadians(lat))) / Math.PI) / 2 * (1 << zoom));
-
-        return new int[]{xTile, yTile};
-    }
-
-    /**
      * Creates a BufferedImage of tiles which span the area
      * @param area The Area object
      * @param zoom The chosen zoom level
      * @return the image
      */
-    public BufferedImage renderMap(Area area, int zoom) throws Throwable {
+    public BufferedImage renderMap(Area area, int zoom) {
 
         List<List<Double>> polygon = area.getGeometry().getCoordinates();
         List<List<Double>> mercatorCoordinates = new ArrayList<>();
 
         //we need to know the bounds so that correct tiles can be used
         int minX=Integer.MAX_VALUE, maxX=Integer.MIN_VALUE, minY=Integer.MAX_VALUE, maxY=Integer.MIN_VALUE;
-        int i = 0;
+
         for(List<Double> xy:polygon){
-            int [] tileXY = toTileNumbers(xy.get(0),xy.get(1),zoom);
+            int [] tileXY = CoordinateUtils.toTileNumbers(xy.get(0),xy.get(1),zoom);
             if(tileXY[0]<minX) minX=tileXY[0];
             else if(tileXY[0]>maxX) maxX=tileXY[0];
             if(tileXY[1]<minY) minY=tileXY[1];
@@ -54,18 +38,18 @@ public class MapRenderer {
         }
 
         List<Zone> zones = area.getCurbZones();
-        Map<Zone,List<List<Double>>> zoneMercs = new LinkedHashMap();
+        Map<Zone,List<List<Double>>> zoneMercs = new LinkedHashMap<>();
         for (Zone zone : zones) {
             List<List<Double>> zoneCoordinates = zone.getGeometry().getCoordinates();
             for(List<Double> xy:zoneCoordinates) {
-                int[] tileXY = toTileNumbers(xy.get(0), xy.get(1), zoom);
+                int[] tileXY = CoordinateUtils.toTileNumbers(xy.get(0), xy.get(1), zoom);
                 if (tileXY[0] < minX) minX = tileXY[0];
                 else if (tileXY[0] > maxX) maxX = tileXY[0];
                 if (tileXY[1] < minY) minY = tileXY[1];
                 else if (tileXY[1] > maxY) maxY = tileXY[1];
                 List<List<Double>> merc = zoneMercs.get(zone);
                 if (merc == null){
-                    merc = new ArrayList();
+                    merc = new ArrayList<>();
                 }
                 List<Double> mercs = CoordinateUtils.toWebMercator(xy.get(0), xy.get(1));
                 merc.add(mercs);
@@ -79,7 +63,7 @@ public class MapRenderer {
         g.setPaint ( new Color ( 200, 200, 200) );
         g.fillRect ( 0, 0, bim.getWidth(), bim.getHeight() );
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        int X = 0, Y = 0;
+        int X=0, Y;
 
         for (int x = minX; x <= maxX; x++) {
             Y=0;
@@ -113,9 +97,9 @@ public class MapRenderer {
 
     /**
      * Draws a shape onto the BufferedImage
-     * @param g
-     * @param mercatorCoordinates
-     * @param zoom
+     * @param g The graphics object
+     * @param mercatorCoordinates The converted coordinates
+     * @param zoom The zoom level
      */
     private void drawShape(Graphics2D g, List<List<Double>> mercatorCoordinates, int minX, int minY,int zoom){
 
@@ -139,10 +123,10 @@ public class MapRenderer {
 
     /**
      * Gets a single tile from cache
-     * @param zoom
-     * @param x
-     * @param y
-     * @return the tile at x,y,x
+     * @param zoom Zoom level (0 to 20+)
+     * @param x The x coordinate
+     * @param y The y coordinate
+     * @return The tile at x,y,x
      */
     public BufferedImage getTile(int zoom, int x, int y) throws Throwable {
         String name = "/"+zoom+"-"+x+"-"+y+".jpeg";
