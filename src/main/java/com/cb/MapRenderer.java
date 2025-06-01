@@ -203,15 +203,13 @@ public class MapRenderer {
     /**
      * Draws a shape onto the BufferedImage
      * @param g  The graphics object
-     * @param pixels  The converted coordinates
-     * @param zoom  The zoom level
+     * @param points The Area
      */
     private void drawArea(Graphics2D g, List<Point> points){
 
         Path2D.Double path = new Path2D.Double();
         boolean firstPoint = true;
 
-        double lastx=0, lasty=0;
         for (Point xy : points) {
             if (firstPoint) {
                 path.moveTo(xy.getX(), xy.getY());
@@ -220,8 +218,6 @@ public class MapRenderer {
                 path.lineTo(xy.getX(), xy.getY());
                 path.moveTo(xy.getX(), xy.getY());
             }
-            lastx = xy.getX();
-            lasty = xy.getY();
         }
         path.closePath();
         g.draw(path);
