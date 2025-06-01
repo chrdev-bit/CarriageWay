@@ -22,38 +22,58 @@ public class MapRenderer {
     public BufferedImage renderMap(Area area, int zoom) {
 
         List<List<Double>> polygon = area.getGeometry().getCoordinates();
-        List<List<Double>> mercatorCoordinates = new ArrayList<>();
 
         //We need to know the bounds so that correct tiles can be used
         int minX=Integer.MAX_VALUE, maxX=Integer.MIN_VALUE, minY=Integer.MAX_VALUE, maxY=Integer.MIN_VALUE;
 
+        List<Point> areaPoints = new ArrayList<>();
+        List<Zone> zones = area.getCurbZones();
+
+        //Find the max XY tile numbers
         for(List<Double> xy:polygon){
             int [] tileXY = CoordinateUtils.toTileNumbers(xy.get(0),xy.get(1),zoom);
             if(tileXY[0]<minX) minX=tileXY[0];
             else if(tileXY[0]>maxX) maxX=tileXY[0];
             if(tileXY[1]<minY) minY=tileXY[1];
             else if(tileXY[1]>maxY) maxY=tileXY[1];
-
-            mercatorCoordinates.add(CoordinateUtils.toWebMercator(xy.get(0), xy.get(1)));
         }
 
-        List<Zone> zones = area.getCurbZones();
-        Map<Zone,List<List<Double>>> zoneMercs = new LinkedHashMap<>();
         for (Zone zone : zones) {
             List<List<Double>> zoneCoordinates = zone.getGeometry().getCoordinates();
-            for(List<Double> xy:zoneCoordinates) {
+            for (List<Double> xy : zoneCoordinates) {
                 int[] tileXY = CoordinateUtils.toTileNumbers(xy.get(0), xy.get(1), zoom);
                 if (tileXY[0] < minX) minX = tileXY[0];
                 else if (tileXY[0] > maxX) maxX = tileXY[0];
                 if (tileXY[1] < minY) minY = tileXY[1];
                 else if (tileXY[1] > maxY) maxY = tileXY[1];
-                List<List<Double>> merc = zoneMercs.get(zone);
-                if (merc == null){
-                    merc = new ArrayList<>();
+            }
+        }
+
+        //Create pixel points for the area
+        for(List<Double> xy:polygon){
+            List<Double> merc = CoordinateUtils.toWebMercator(xy.get(0), xy.get(1));
+            int[] pixelCoord = CoordinateUtils.toPixelCoordinates(merc.get(0), merc.get(1), zoom);
+            int x = pixelCoord[0] - (minX * TILE_SIZE);
+            int y = pixelCoord[1] - (minY * TILE_SIZE);
+            areaPoints.add(new Point(x,y));
+        }
+
+        //Create pixel points for the zones
+        Map<Zone,List<Point>> zonePoints = new LinkedHashMap<>();
+
+        for (Zone zone : zones) {
+            List<List<Double>> zoneCoordinates = zone.getGeometry().getCoordinates();
+            for(List<Double> xy:zoneCoordinates) {
+                List<Point> zm = zonePoints.get(zone);
+                if (zm == null){
+                    zm = new ArrayList<>();
                 }
                 List<Double> mercs = CoordinateUtils.toWebMercator(xy.get(0), xy.get(1));
-                merc.add(mercs);
-                zoneMercs.put(zone,merc);
+                int[] pixelCoord = CoordinateUtils.toPixelCoordinates(mercs.get(0), mercs.get(1), zoom);
+                int x = pixelCoord[0] - (minX * TILE_SIZE);
+                int y = pixelCoord[1] - (minY * TILE_SIZE);
+                zm.add(new Point(x,y));
+                zonePoints.put(zone,zm);
             }
 
         }
@@ -81,30 +101,9 @@ public class MapRenderer {
 
         g.setColor(new Color(0, 255, 0, 255));
         g.setStroke(new BasicStroke(2));
+        drawArea(g,areaPoints);
 
-        List<Point> ar = new ArrayList<>();
-        for (List<Double> mercatorCoord : mercatorCoordinates) {
-            int[] pixelCoord = CoordinateUtils.toPixelCoordinates(mercatorCoord.get(0), mercatorCoord.get(1), zoom);
-            int x = pixelCoord[0] - (minX * TILE_SIZE);
-            int y = pixelCoord[1] - (minY * TILE_SIZE);
-            ar.add(new Point(x,y));
-        }
-        drawArea(g,ar);
-
-        List<List<Point>> allLines = new ArrayList<>();
-
-        for (Map.Entry<Zone, List<List<Double>>> entry : zoneMercs.entrySet()) {
-            List<List<Double>> mc = entry.getValue();
-            List<Point> zo = new ArrayList<>();
-
-            for (List<Double> mercatorCoord : mc) {
-                int[] pixelCoord = CoordinateUtils.toPixelCoordinates(mercatorCoord.get(0), mercatorCoord.get(1), zoom);
-                int x = pixelCoord[0] - (minX * TILE_SIZE);
-                int y = pixelCoord[1] - (minY * TILE_SIZE);
-                zo.add(new Point(x,y));
-            }
-            allLines.add(zo);
-        }
+        List<List<Point>> allLines = new ArrayList<>(zonePoints.values());
 
         g.setColor(new Color(255,0,0,255));
         g.setStroke(new BasicStroke(2));
