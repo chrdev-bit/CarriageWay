@@ -21,14 +21,10 @@ public class MapRenderer {
      */
     public BufferedImage renderMap(Area area, int zoom) {
 
-        List<List<Double>> polygon = area.getGeometry().getCoordinates();
-
         //We need to know the bounds so that correct tiles can be used
         int minX=Integer.MAX_VALUE, maxX=Integer.MIN_VALUE, minY=Integer.MAX_VALUE, maxY=Integer.MIN_VALUE;
 
-        List<Point> areaPoints = new ArrayList<>();
-        List<Zone> zones = area.getCurbZones();
-
+        List<List<Double>> polygon = area.getGeometry().getCoordinates();
         //Find the max XY tile numbers
         for(List<Double> xy:polygon){
             int [] tileXY = CoordinateUtils.toTileNumbers(xy.get(0),xy.get(1),zoom);
@@ -38,6 +34,7 @@ public class MapRenderer {
             else if(tileXY[1]>maxY) maxY=tileXY[1];
         }
 
+        List<Zone> zones = area.getCurbZones();
         for (Zone zone : zones) {
             List<List<Double>> zoneCoordinates = zone.getGeometry().getCoordinates();
             for (List<Double> xy : zoneCoordinates) {
@@ -49,6 +46,7 @@ public class MapRenderer {
             }
         }
 
+        List<Point> areaPoints = new ArrayList<>();
         //Create pixel points for the area
         for(List<Double> xy:polygon){
             List<Double> merc = CoordinateUtils.toWebMercator(xy.get(0), xy.get(1));
@@ -58,9 +56,8 @@ public class MapRenderer {
             areaPoints.add(new Point(x,y));
         }
 
-        //Create pixel points for the zones
         Map<Zone,List<Point>> zonePoints = new LinkedHashMap<>();
-
+        //Create pixel points for the zones
         for (Zone zone : zones) {
             List<List<Double>> zoneCoordinates = zone.getGeometry().getCoordinates();
             for(List<Double> xy:zoneCoordinates) {
@@ -68,8 +65,8 @@ public class MapRenderer {
                 if (zm == null){
                     zm = new ArrayList<>();
                 }
-                List<Double> mercs = CoordinateUtils.toWebMercator(xy.get(0), xy.get(1));
-                int[] pixelCoord = CoordinateUtils.toPixelCoordinates(mercs.get(0), mercs.get(1), zoom);
+                List<Double> merc = CoordinateUtils.toWebMercator(xy.get(0), xy.get(1));
+                int[] pixelCoord = CoordinateUtils.toPixelCoordinates(merc.get(0), merc.get(1), zoom);
                 int x = pixelCoord[0] - (minX * TILE_SIZE);
                 int y = pixelCoord[1] - (minY * TILE_SIZE);
                 zm.add(new Point(x,y));
