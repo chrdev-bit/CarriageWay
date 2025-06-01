@@ -13,6 +13,24 @@ public class MapRenderer {
 
     private static final int TILE_SIZE = 256;
 
+    private void setTileRange(List<List<Double>> shape, Bounds b, int zoom){
+        for(List<Double> xy:shape){
+            int [] tileXY = CoordinateUtils.toTileNumbers(xy.get(0),xy.get(1),zoom);
+            if(tileXY[0]<b.minX) b.minX=tileXY[0];
+            else if(tileXY[0]>b.maxX) b.maxX=tileXY[0];
+            if(tileXY[1]<b.minY) b.minY=tileXY[1];
+            else if(tileXY[1]>b.maxY) b.maxY=tileXY[1];
+        }
+    }
+
+    /**
+     * A simple class that represents a bounding box
+     */
+    class Bounds{
+        int minX=Integer.MAX_VALUE, maxX=Integer.MIN_VALUE, minY=Integer.MAX_VALUE, maxY=Integer.MIN_VALUE;
+    }
+
+
     /**
      * Creates a BufferedImage of tiles which span the area
      * @param area  The Area object
@@ -22,36 +40,24 @@ public class MapRenderer {
     public BufferedImage renderMap(Area area, int zoom, boolean straight) {
 
         //We need to know the bounds so that correct tiles can be used
-        int minX=Integer.MAX_VALUE, maxX=Integer.MIN_VALUE, minY=Integer.MAX_VALUE, maxY=Integer.MIN_VALUE;
+        Bounds bounds = new Bounds();
 
-        List<List<Double>> polygon = area.getGeometry().getCoordinates();
         //Find the max XY tile numbers
-        for(List<Double> xy:polygon){
-            int [] tileXY = CoordinateUtils.toTileNumbers(xy.get(0),xy.get(1),zoom);
-            if(tileXY[0]<minX) minX=tileXY[0];
-            else if(tileXY[0]>maxX) maxX=tileXY[0];
-            if(tileXY[1]<minY) minY=tileXY[1];
-            else if(tileXY[1]>maxY) maxY=tileXY[1];
-        }
+        List<List<Double>> polygon = area.getGeometry().getCoordinates();
+        setTileRange(polygon,bounds,zoom);
 
         List<Zone> zones = area.getCurbZones();
         for (Zone zone : zones) {
             List<List<Double>> zoneCoordinates = zone.getGeometry().getCoordinates();
-            for (List<Double> xy : zoneCoordinates) {
-                int[] tileXY = CoordinateUtils.toTileNumbers(xy.get(0), xy.get(1), zoom);
-                if (tileXY[0] < minX) minX = tileXY[0];
-                else if (tileXY[0] > maxX) maxX = tileXY[0];
-                if (tileXY[1] < minY) minY = tileXY[1];
-                else if (tileXY[1] > maxY) maxY = tileXY[1];
-            }
+            setTileRange(zoneCoordinates,bounds,zoom);
         }
 
         List<Point> areaPoints = new ArrayList<>();
         //Create pixel points for the area
         for(List<Double> xy:polygon){
             int[] pixelCoord = CoordinateUtils.toPixelCoordinates(xy.get(0), xy.get(1), zoom);
-            int x = pixelCoord[0] - (minX * TILE_SIZE);
-            int y = pixelCoord[1] - (minY * TILE_SIZE);
+            int x = pixelCoord[0] - (bounds.minX * TILE_SIZE);
+            int y = pixelCoord[1] - (bounds.minY * TILE_SIZE);
             areaPoints.add(new Point(x,y));
         }
 
@@ -65,24 +71,25 @@ public class MapRenderer {
                     zm = new ArrayList<>();
                 }
                 int[] pixelCoord = CoordinateUtils.toPixelCoordinates(xy.get(0), xy.get(1), zoom);
-                int x = pixelCoord[0] - (minX * TILE_SIZE);
-                int y = pixelCoord[1] - (minY * TILE_SIZE);
+                int x = pixelCoord[0] - (bounds.minX * TILE_SIZE);
+                int y = pixelCoord[1] - (bounds.minY * TILE_SIZE);
                 zm.add(new Point(x,y));
                 zonePoints.put(zone,zm);
             }
 
         }
 
-        BufferedImage bim =  new BufferedImage(((maxX-minX)+1)*TILE_SIZE, ((maxY-minY)+1)*TILE_SIZE, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage bim =  new BufferedImage(((bounds.maxX-bounds.minX)+1)*TILE_SIZE,
+                ((bounds.maxY-bounds.minY)+1)*TILE_SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = bim.createGraphics();
         g.setPaint ( new Color ( 200, 200, 200) );
         g.fillRect ( 0, 0, bim.getWidth(), bim.getHeight() );
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         int X=0, Y;
 
-        for (int x = minX; x <= maxX; x++) {
+        for (int x = bounds.minX; x <= bounds.maxX; x++) {
             Y=0;
-            for (int y = minY; y <= maxY; y++) {
+            for (int y = bounds.minY; y <= bounds.maxY; y++) {
                 try {
                     BufferedImage tile = getTile(zoom, x, y);
                     g.drawImage(tile, X * TILE_SIZE, Y * TILE_SIZE, null);
