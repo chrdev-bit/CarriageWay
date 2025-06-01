@@ -13,8 +13,8 @@ import java.io.InputStream;
 public class ZoneProcessor {
     /**
      * Parse the zones and consume into a Map via the FunctionalInterface
-     * @param in
-     * @param consumer
+     * @param in  GeoJSON of zones
+     * @param consumer  Consumer callback
      * @throws Exception
      */
     public static void processZones(InputStream in, ZoneConsumer consumer) throws Exception {

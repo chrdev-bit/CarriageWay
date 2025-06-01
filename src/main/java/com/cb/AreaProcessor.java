@@ -16,9 +16,9 @@ import java.util.Map;
 public class AreaProcessor {
     /**
      * Starts the parse of areas and calls back on the FunctionalInterface
-     * @param in the json area data
-     * @param zonesMap
-     * @param consumer
+     * @param in  The json area data
+     * @param zonesMap  A Map of Zones
+     * @param consumer  The consumer
      * @throws Exception
      */
     public static void processAreas(InputStream in, Map<String, Zone> zonesMap, AreaConsumer consumer) throws Exception {
