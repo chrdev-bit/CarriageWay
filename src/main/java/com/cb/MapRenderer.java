@@ -54,31 +54,22 @@ public class MapRenderer {
 
         List<Point> areaPoints = new ArrayList<>();
         //Create pixel points for the area
-        for(List<Double> xy:polygon){
-            int[] pixelCoord = CoordinateUtils.toPixelCoordinates(xy.get(0), xy.get(1), zoom);
-            int x = pixelCoord[0] - (bounds.minX * TILE_SIZE);
-            int y = pixelCoord[1] - (bounds.minY * TILE_SIZE);
-            areaPoints.add(new Point(x,y));
+        for(List<Double> gps:polygon){
+            computePoints(gps,areaPoints,bounds,zoom);
         }
 
-        Map<Zone,List<Point>> zonePoints = new LinkedHashMap<>();
+        List<List<Point>> zonePoints = new ArrayList<>();
         //Create pixel points for the zones
         for (Zone zone : zones) {
             List<List<Double>> zoneCoordinates = zone.getGeometry().getCoordinates();
-            for(List<Double> xy:zoneCoordinates) {
-                List<Point> zm = zonePoints.get(zone);
-                if (zm == null){
-                    zm = new ArrayList<>();
-                }
-                int[] pixelCoord = CoordinateUtils.toPixelCoordinates(xy.get(0), xy.get(1), zoom);
-                int x = pixelCoord[0] - (bounds.minX * TILE_SIZE);
-                int y = pixelCoord[1] - (bounds.minY * TILE_SIZE);
-                zm.add(new Point(x,y));
-                zonePoints.put(zone,zm);
+            List<Point> zp = new ArrayList<>();
+            for(List<Double> gps:zoneCoordinates) {
+                computePoints(gps,zp,bounds,zoom);
             }
-
+            zonePoints.add(zp);
         }
 
+        //Create the canvas
         BufferedImage bim =  new BufferedImage(((bounds.maxX-bounds.minX)+1)*TILE_SIZE,
                 ((bounds.maxY-bounds.minY)+1)*TILE_SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = bim.createGraphics();
@@ -105,12 +96,10 @@ public class MapRenderer {
         g.setStroke(new BasicStroke(2));
         drawArea(g,areaPoints);
 
-        List<List<Point>> allLines = new ArrayList<>(zonePoints.values());
-
         g.setColor(new Color(255,0,0,255));
         g.setStroke(new BasicStroke(2));
 
-        for(List<Point> line:concatenateLines(allLines)){
+        for(List<Point> line:concatenateLines(zonePoints)){
             if(straight) {
                 drawStraightLine(g, line);
             }else {
@@ -121,6 +110,14 @@ public class MapRenderer {
         g.dispose();
         return bim;
     }
+
+    private void computePoints(List<Double> gps, List<Point> dest, Bounds bounds, int zoom){
+        int[] pixelCoord = CoordinateUtils.toPixelCoordinates(gps.get(0), gps.get(1), zoom);
+        int x = pixelCoord[0] - (bounds.minX * TILE_SIZE);
+        int y = pixelCoord[1] - (bounds.minY * TILE_SIZE);
+        dest.add(new Point(x,y));
+    }
+
 
     /**
      * Concatenate the lines (Zones) associated with the Area. This is needed so we can get a straight line

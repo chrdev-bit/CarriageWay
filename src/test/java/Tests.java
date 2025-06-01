@@ -67,6 +67,12 @@ public class Tests {
 
     }
 
+    @Test
+    public void drawJagged()throws Throwable{
+        Main m = new Main();
+        m.parse(new FileInputStream("zones.json"),new FileInputStream("areas.json"),true, false);
+    }
+
     void log(Object o){
        System.out.println(o);
     }
