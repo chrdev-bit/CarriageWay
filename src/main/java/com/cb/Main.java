@@ -14,30 +14,29 @@ public class Main {
     }
     public Main(String[] args) throws Throwable {
         if(args==null || args.length==0){
-            parse(new FileInputStream("zones.json"),new FileInputStream("areas.json"),true);
+            parse(new FileInputStream("zones.json"),new FileInputStream("areas.json"),true, true);
         }else{
-            parse(new FileInputStream(args[0]),new FileInputStream(args[1]),true);
+            parse(new FileInputStream(args[0]),new FileInputStream(args[1]),true, true);
         }
     }
 
-    public Main() throws Throwable {
+    public Main() {
     }
 
     /**
      * The inputstreams representing the zones and areas json as well as a flag to enable/disable png output
-     * @param zones
-     * @param areas
-     * @param createImages
+     * @param zones  An inputstream of a GeoJSON file of Zones
+     * @param areas  An inputstream of a GeoJSON file of Areas
+     * @param createImages  Shall we write images to disk
+     * @param straight  Draw zones from start to end rather than point-to-point
      * @throws Throwable
      */
-    public void parse(InputStream zones, InputStream areas, boolean createImages) throws Throwable{
+    public void parse(InputStream zones, InputStream areas, boolean createImages, boolean straight) throws Throwable{
 
         // Map to store zones for quick lookup
         Map<String, Zone> zonesMap = new HashMap<>();
 
-        ZoneProcessor.processZones(zones, zone -> {
-            zonesMap.put(zone.getCurbZoneId(), zone);
-        });
+        ZoneProcessor.processZones(zones, zone -> zonesMap.put(zone.getCurbZoneId(), zone));
 
         int[] N = {0};
         final MapRenderer mr = new MapRenderer();
@@ -47,7 +46,7 @@ public class Main {
                 String type = area.getGeometry().getType();
                 if (type.equals("Polygon")) {
                     int imageNum = N[0]++;
-                    BufferedImage image = mr.renderMap(area, 20);
+                    BufferedImage image = mr.renderMap(area, 20, straight);
                     if(createImages){
                         File output = new File("area_and_zones_"+imageNum+".png");
                         ImageIO.write(image, "png", output);
@@ -55,7 +54,6 @@ public class Main {
                     }else{
                         System.out.println("#"+imageNum+", Didn't save: " + image.getWidth()+"x"+image.getHeight());
                     }
-
                 }
             }catch(Throwable t){
                 t.printStackTrace();

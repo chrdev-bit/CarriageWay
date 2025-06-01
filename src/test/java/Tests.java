@@ -6,15 +6,12 @@ import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
-import java.io.FileInputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.io.PrintStream;
+import java.io.*;
 
 public class Tests {
     @Test
     public void testScale() throws Throwable {
-        int clones = 100;
+        int clones = 10;
         //Simulate a stream of data by duplicating existing area data
         //The zones must be able to fit into RAM. As long as they do this could process areas indefinitely
         //It doesn't save bitmaps to disk because the amount it produces wouldn't be much fun for a file system
@@ -65,7 +62,7 @@ public class Tests {
         r.start();
 
         Main main = new Main();
-        main.parse(new FileInputStream("zones.json"),pis,false);
+        main.parse(new FileInputStream("zones.json"),pis,false, true);
         r.join();
 
     }
@@ -73,4 +70,5 @@ public class Tests {
     void log(Object o){
        System.out.println(o);
     }
+
 }

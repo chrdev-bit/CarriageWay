@@ -47,15 +47,16 @@ public class CoordinateUtils {
 
     /**
      * Converts Web Mercator coordinates to pixel coordinates relative to the TILE_SIZE.
-     * @param mercatorX The mercator X coordinate
-     * @param mercatorY The mercator Y coordinate
+     * @param lon Longitude
+     * @param lat Latitude
      * @param zoom Zoom level 0-20+
      * @return A pair of pixel coordinates
      */
-    public static int[] toPixelCoordinates(double mercatorX, double mercatorY, int zoom) {
+    public static int[] toPixelCoordinates(double lon, double lat, int zoom) {
+        List<Double> merc = toWebMercator(lon, lat);
         double scale = TILE_SIZE * (1 << zoom) / 20037508.34 / 2;
-        int pixelX = (int) ((mercatorX + 20037508.34) * scale);
-        int pixelY = (int) ((20037508.34 - mercatorY) * scale);
+        int pixelX = (int) ((merc.get(0) + 20037508.34) * scale);
+        int pixelY = (int) ((20037508.34 - merc.get(1)) * scale);
         return new int[]{pixelX, pixelY};
     }
 }
