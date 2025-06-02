@@ -118,7 +118,7 @@ public class MapRenderer {
     }
 
     /**
-     *
+     * Converts gps coordinates to tile XY coordinates
      * @param gps  The gps points
      * @param dest  The destination container
      * @param bounds  The bounds
