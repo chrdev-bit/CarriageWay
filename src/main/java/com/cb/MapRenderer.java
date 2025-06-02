@@ -13,6 +13,12 @@ public class MapRenderer {
 
     private static final int TILE_SIZE = 256;
 
+    /**
+     * Sets the tile bounds given the gps coordinates
+     * @param shape A list of gps pairs
+     * @param b The bounds to set max/min
+     * @param zoom  The zoom level
+     */
     private void setTileRange(List<List<Double>> shape, Bounds b, int zoom){
         for(List<Double> xy:shape){
             int [] tileXY = CoordinateUtils.toTileNumbers(xy.get(0),xy.get(1),zoom);
@@ -111,6 +117,13 @@ public class MapRenderer {
         return bim;
     }
 
+    /**
+     *
+     * @param gps  The gps points
+     * @param dest  The destination container
+     * @param bounds  The bounds
+     * @param zoom  The zoom level
+     */
     private void computePoints(List<Double> gps, List<Point> dest, Bounds bounds, int zoom){
         int[] pixelCoord = CoordinateUtils.toPixelCoordinates(gps.get(0), gps.get(1), zoom);
         int x = pixelCoord[0] - (bounds.minX * TILE_SIZE);
